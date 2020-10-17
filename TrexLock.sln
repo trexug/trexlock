@@ -3,7 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30523.141
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrexLock", "TrexLock\TrexLock.csproj", "{7528EF99-F2BA-4C56-9067-E882FF75356C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TrexLock", "TrexLock\TrexLock.csproj", "{7528EF99-F2BA-4C56-9067-E882FF75356C}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TrexLetsDuck", "TrexLetsDuck\TrexLetsDuck.csproj", "{A4244C56-978E-487E-8886-752F04E3AC77}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrexLetsDuckConsole", "TrexLetsDuckConsole\TrexLetsDuckConsole.csproj", "{D4C5EFD2-C7B1-4CF2-9AA2-B671F0438A9A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +19,14 @@ Global
 		{7528EF99-F2BA-4C56-9067-E882FF75356C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7528EF99-F2BA-4C56-9067-E882FF75356C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7528EF99-F2BA-4C56-9067-E882FF75356C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A4244C56-978E-487E-8886-752F04E3AC77}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A4244C56-978E-487E-8886-752F04E3AC77}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A4244C56-978E-487E-8886-752F04E3AC77}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A4244C56-978E-487E-8886-752F04E3AC77}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D4C5EFD2-C7B1-4CF2-9AA2-B671F0438A9A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D4C5EFD2-C7B1-4CF2-9AA2-B671F0438A9A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D4C5EFD2-C7B1-4CF2-9AA2-B671F0438A9A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D4C5EFD2-C7B1-4CF2-9AA2-B671F0438A9A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

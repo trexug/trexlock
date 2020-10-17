@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -20,7 +22,18 @@ namespace TrexLock
 			Host.CreateDefaultBuilder(args)
 				.ConfigureWebHostDefaults(webBuilder =>
 				{
-					webBuilder.UseStartup<Startup>();
+					webBuilder
+					.UseKestrel
+					(options =>
+							options.Listen(IPAddress.Any, 8223, listenOptions =>
+							
+								listenOptions.UseHttps(httpsOptions => 
+									httpsOptions.ServerCertificateSelector = (context, dnsName) =>
+										new X509Certificate2(@"C:\Files\cert", "1234")
+								)
+							)
+					)
+					.UseStartup<Startup>();
 				});
 	}
 }
