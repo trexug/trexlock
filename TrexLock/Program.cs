@@ -14,7 +14,7 @@ namespace TrexLock
 {
 	public class Program
 	{
-		public const int Port = 8223;
+		public const int Port = 443;
 		public static X509Certificate2 Certificate { get; set; } = new X509Certificate2();
 		public static void Main(string[] args)
 		{
