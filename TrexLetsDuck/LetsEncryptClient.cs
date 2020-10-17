@@ -1,5 +1,6 @@
 ﻿using Certes;
 using Certes.Acme;
+using Certes.Acme.Resource;
 using System;
 using System.Linq;
 using System.Threading;
@@ -42,8 +43,16 @@ namespace TrexLetsDuck
 			var dnsTxt = AcmeContext.AccountKey.DnsTxt(dnsChallenge.Token);
 			var privateKey = KeyFactory.NewKey(KeyAlgorithm.ES256);
 			setDnsTxt(dnsTxt);
-			Thread.Sleep(5000);
-			var challenge = await dnsChallenge.Validate();
+			Challenge challenge = null;
+			for (int i = 0; challenge?.Status != ChallengeStatus.Valid && i < 10; i++)
+			{
+				challenge = await dnsChallenge.Validate();
+				if (challenge.Status == ChallengeStatus.Valid)
+				{
+					break;
+				}
+				Thread.Sleep(1000);
+			}
 			var cert = await order.Generate(Configuration.CsrInfo, privateKey);
 			var pfxBuilder = cert.ToPfx(privateKey);
 			return pfxBuilder.Build(Configuration.CertificateName, Configuration.CertificatePassword);
