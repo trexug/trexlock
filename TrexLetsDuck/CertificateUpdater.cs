@@ -55,6 +55,11 @@ namespace TrexLetsDuck
 				string tempFile = Path.GetTempFileName();
 				File.WriteAllBytes(tempFile, newCertificateBytes);
 				Logger.LogInformation($"Temporary certificate written to {tempFile}");
+				var parent = new FileInfo(CertificateUpdaterConfig.FilePath).Directory;
+				if (!parent.Exists)
+				{
+					parent.Create();
+				}
 				File.Move(tempFile, CertificateUpdaterConfig.FilePath, true);
 				Certificate = newCertificate;
 				Logger.LogInformation("Certificate updated.");
