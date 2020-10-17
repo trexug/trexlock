@@ -5,6 +5,7 @@ using System.Net;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Server.Kestrel.Https;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -13,6 +14,8 @@ namespace TrexLock
 {
 	public class Program
 	{
+		public const int Port = 8223;
+		public static X509Certificate2 Certificate { get; set; } = new X509Certificate2();
 		public static void Main(string[] args)
 		{
 			CreateHostBuilder(args).Build().Run();
@@ -25,11 +28,11 @@ namespace TrexLock
 					webBuilder
 					.UseKestrel
 					(options =>
-							options.Listen(IPAddress.Any, 8223, listenOptions =>
-							
-								listenOptions.UseHttps(httpsOptions => 
+							options.ListenAnyIP(Port, listenOptions =>
+
+								listenOptions.UseHttps(httpsOptions =>
 									httpsOptions.ServerCertificateSelector = (context, dnsName) =>
-										new X509Certificate2(@"C:\Files\cert", "1234")
+										Certificate
 								)
 							)
 					)

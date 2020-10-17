@@ -4,8 +4,9 @@ using System.Text;
 
 namespace TrexLetsDuck
 {
-	public interface IIpUpdateConfig
+	public class IpUpdaterConfiguration
 	{
+		public const string IpUpdater = "IpUpdater";
 		public TimeSpan UpdateInterval { get; }
 	}
 }

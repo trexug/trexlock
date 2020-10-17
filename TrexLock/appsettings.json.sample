@@ -1,0 +1,53 @@
+{
+  "Auth": {
+    "Token": "ReplaceMe"
+  },
+  "Locking": {
+    "LockConfigurations": [
+      {
+        "Id": "front",
+        "Pin": 26
+      },
+      {
+        "Id": "back",
+        "Pin": 20
+      },
+      {
+        "Id": "not_used",
+        "Pin": 21
+      }
+    ]
+  },
+  "LetsEncrypt": {
+    "Email": "me@example.com",
+    "CertificateName": "TrexLock",
+    "CertificatePassword": "",
+    "CertificateIdentifier": "example.duckdns.org",
+    "CsrInfo": {
+      "CountryName": "Denmark",
+      "Locality": "DK",
+      "Organization": "Trex",
+      "OrganizationUnit": "TrexLock",
+      "State": "DK"
+    }
+  },
+  "DuckDns": {
+    "Domains": [ "example.duckdns.org" ],
+    "Token": "Get Token From duckdns.org"
+  },
+  "IpUpdater": {
+    "UpdateInterval": "00:05:00"
+  },
+  "CertificateUpdater": {
+    "FilePath": "/ssl/cert.pem",
+    "RenewBeforeExpiry": "30.00:00:00"
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Trace",
+      "Microsoft": "Warning",
+      "Microsoft.Hosting.Lifetime": "Information"
+    }
+  },
+  "AllowedHosts": "*"
+}

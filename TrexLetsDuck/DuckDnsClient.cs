@@ -11,15 +11,15 @@ namespace DuckDns
 	{
 		public const string DuckDnsUpdateUrl = "https://www.duckdns.org/update";
 		private RestClient DnsClient { get; }
-		private IDuckDnsConfiguration DuckDnsConfiguration { get; }
-		public DuckDnsClient(IDuckDnsConfiguration duckDnsConfiguration)
+		private DuckDnsConfiguration DuckDnsConfiguration { get; }
+		public DuckDnsClient(DuckDnsConfiguration duckDnsConfiguration)
 		{
 			DuckDnsConfiguration = duckDnsConfiguration;
 			DnsClient = new RestClient(DuckDnsUpdateUrl);
 			DnsClient.UseNewtonsoftJson();
 		}
 
-		public Task<bool> UpdateIp(string ip = null)
+		public Task<bool> UpdateIpAsync(string ip = null)
 		{
 			RestRequest request = CreateRequest();
 			if (ip != null)

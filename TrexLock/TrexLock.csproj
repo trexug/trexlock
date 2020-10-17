@@ -16,5 +16,15 @@
     <PackageReference Include="Unosquare.WiringPi" Version="0.5.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\TrexLetsDuck\TrexLetsDuck.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="trexlock.db">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 
 </Project>

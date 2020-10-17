@@ -11,7 +11,7 @@ namespace TrexLetsDuck
 		private LetsEncryptClient LetsEncryptClient { get; }
 		private DuckDnsClient DuckDnsClient { get; }
 		private ILogger<LetsDuckClient> Logger { get; }
-		public LetsDuckClient(ILoggerFactory loggerFactory, ILetsEncryptConfiguration letsEncryptConfiguration, IDuckDnsConfiguration duckDnsConfiguration, string letsEncryptPemKey = null)
+		public LetsDuckClient(ILoggerFactory loggerFactory, LetsEncryptConfiguration letsEncryptConfiguration, DuckDnsConfiguration duckDnsConfiguration, string letsEncryptPemKey = null)
 		{
 			Logger = loggerFactory.CreateLogger<LetsDuckClient>();
 
@@ -41,7 +41,7 @@ namespace TrexLetsDuck
 			Logger.LogInformation("Updating DuckDns TXT record..");
 			if (!DuckDnsClient.UpdateTxtAsync(dnsTxt).Result)
 			{
-				throw new Exception();
+				Logger.LogError("DuckDns entry update failed");
 			}
 		}
 	}

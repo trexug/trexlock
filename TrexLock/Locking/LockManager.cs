@@ -18,7 +18,7 @@ namespace TrexLock.Locking
 		private Dictionary<string, Lock> IdToLock { get; }
 		private ILogger<LockManager> Logger { get; }
 		private Timer Timer { get; }
-		private SemaphoreSlim DbSemaphore { get; }
+		private SemaphoreSlim DbSemaphore => LockDbContext.Semaphore;
 		private SemaphoreSlim TimerSemaphore { get; }
 
 		public LockManager(ILoggerFactory loggerFactory, IGpioPinFactory gpioPinFactory, IOptions<LockOptions> lockOptions, LockDbContext lockDbContext)
@@ -27,7 +27,6 @@ namespace TrexLock.Locking
 			Logger = loggerFactory.CreateLogger<LockManager>();
 			LockDbContext = lockDbContext;
 			Timer = new Timer(TimerExpired);
-			DbSemaphore = new SemaphoreSlim(1);
 			TimerSemaphore = new SemaphoreSlim(1);
 			Initialize(lockOptions.Value, gpioPinFactory, lockDbContext);
 		}
