@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System.IO;
 using System.Threading;
 using TrexLock.Persistence.Dto;
 
@@ -6,6 +7,12 @@ namespace TrexLock.Persistence
 {
 	public class LockDbContext : DbContext
 	{
+		private const string InitialDatabase = "trexlock.db.sample";
+#if DEBUG
+		public const string FilePath = "trexlock.db";
+#else
+		public const string FilePath = "/data/trexlock.db";
+#endif
 		public SemaphoreSlim Semaphore { get; }
 		public LockDbContext() : base()
 		{
@@ -13,11 +20,14 @@ namespace TrexLock.Persistence
 		}
 
 		protected override void OnConfiguring(DbContextOptionsBuilder options)
-#if DEBUG
-			=> options.UseSqlite("Data Source=trexlock.db");
-#else
-			=> options.UseSqlite("Data Source=/data/trexlock.db");
-#endif
+		{
+			if (!File.Exists(FilePath))
+			{
+				File.Copy(InitialDatabase, FilePath);
+			}
+			options.UseSqlite($"Data Source={FilePath}");
+		}
+
 		public DbSet<PinLogDto> PinLogs { get; set; }
 		public DbSet<LockDto> Locks { get; set; }
 		public DbSet<KeyDto> Keys { get; set; }
