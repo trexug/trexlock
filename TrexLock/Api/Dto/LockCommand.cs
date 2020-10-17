@@ -8,7 +8,7 @@ namespace TrexLock.Api.Dto
 {
 	public class LockCommand : AuthorizedCommand
 	{
-		public LockMode Action { get; set; }
+		public LockAction Action { get; set; }
 		public int? Timeout { get; set; }
 	}
 }

@@ -18,6 +18,8 @@ namespace TrexLock.Locking
 		private Dictionary<string, Lock> IdToLock { get; }
 		private ILogger<LockManager> Logger { get; }
 		private Timer Timer { get; }
+		private SemaphoreSlim DbSemaphore { get; }
+		private SemaphoreSlim TimerSemaphore { get; }
 
 		public LockManager(ILoggerFactory loggerFactory, IGpioPinFactory gpioPinFactory, IOptions<LockOptions> lockOptions, LockDbContext lockDbContext)
 		{
@@ -25,133 +27,229 @@ namespace TrexLock.Locking
 			Logger = loggerFactory.CreateLogger<LockManager>();
 			LockDbContext = lockDbContext;
 			Timer = new Timer(TimerExpired);
-
-			Initialize(lockOptions.Value, gpioPinFactory, lockDbContext).Wait();
+			DbSemaphore = new SemaphoreSlim(1);
+			TimerSemaphore = new SemaphoreSlim(1);
+			Initialize(lockOptions.Value, gpioPinFactory, lockDbContext);
 		}
 
-		private async Task Initialize(LockOptions lockOptions, IGpioPinFactory gpioPinFactory, LockDbContext lockDbContext)
+		private void Initialize(LockOptions lockOptions, IGpioPinFactory gpioPinFactory, LockDbContext lockDbContext)
 		{
-			foreach (LockConfiguration lockConfiguration in lockOptions.LockConfigurations)
+			async Task InitializeLock(LockConfiguration lockConfiguration)
 			{
-				LockState state = lockDbContext.Locks.Find(lockConfiguration.Id);
-				LockMode mode = state?.Mode ?? LockMode.Lock;
-				Lock @lock = new Lock(lockConfiguration.Id, gpioPinFactory.CreatePin((BcmPin)lockConfiguration.Pin), (LockMode)(-1));
+				LockDto lockDto = await lockDbContext.Locks.FindAsync(lockConfiguration.Id);
+				LockState mode = lockDto?.State ?? LockState.Locked;
+				Lock @lock = new Lock(lockConfiguration.Id, gpioPinFactory.CreatePin((BcmPin)lockConfiguration.Pin), (LockState)(-1));
+				@lock.Timeout = lockDto?.Timeout;
 				await SetAsync(@lock, mode, "INITIALIZE");
 				IdToLock.Add(@lock.Id, @lock);
 			}
+
+			Task.WaitAll(lockOptions.LockConfigurations.Select(InitializeLock).ToArray());
+			UpdateTimerAsync().Wait();
 		}
 
 		public IEnumerable<string> Locks => IdToLock.Keys;
 
-		public Task SetLockAsync(string id, LockMode mode, string reason, DateTime? timeout = null)
+		public async Task ToggleLockAsync(string id, string reason)
 		{
 			if (!IdToLock.TryGetValue(id, out Lock @lock))
 			{
 				throw new ArgumentException("Unknown id", nameof(id));
 			}
 
-			lock (this)
+			await @lock.Semaphore.WaitAsync();
+			try
 			{
-				SetAsync(@lock, mode, reason).Wait();
-				@lock.Timeout = timeout.Value;
-				UpdateTimer();
-
-				LockState lockState = LockDbContext.Locks.Find(id);
-				if (lockState == null)
+				@lock.Timeout = null;
+				LockState newState = await ToggleAsync(@lock, reason);
+				await DbSemaphore.WaitAsync();
+				try
 				{
-					lockState = new LockState()
-					{
-						Id = id,
-						Mode = mode,
-						Timeout = timeout
-					};
-					LockDbContext.Add(lockState);
+					await UpdateLockDto(id, newState, null);
 				}
-				else
+				finally
 				{
-					lockState.Mode = mode;
-					lockState.Timeout = timeout;
-					LockDbContext.Update(lockState);
+					DbSemaphore.Release();
+				}
+				
+			}
+			finally
+			{
+				@lock.Semaphore.Release();
+			}
+			await UpdateTimerAsync();
+		}
+
+		public async Task SetLockAsync(string id, LockState state, string reason, DateTime? timeout = null)
+		{
+			if (!IdToLock.TryGetValue(id, out Lock @lock))
+			{
+				throw new ArgumentException("Unknown id", nameof(id));
+			}
+
+			await @lock.Semaphore.WaitAsync();
+			try
+			{
+				@lock.Timeout = timeout;
+				await SetAsync(@lock, state, reason);
+				await DbSemaphore.WaitAsync();
+				try
+				{
+					await UpdateLockDto(id, state, timeout);
+				}
+				finally
+				{
+					DbSemaphore.Release();
 				}
 			}
-			return LockDbContext.SaveChangesAsync();
+			finally
+			{
+				@lock.Semaphore.Release();
+			}
+			await UpdateTimerAsync();
+		}
+
+		private async Task UpdateLockDto(string id, LockState state, DateTime? timeout)
+		{
+			LockDto lockDto = LockDbContext.Locks.Find(id);
+			if (lockDto == null)
+			{
+				lockDto = new LockDto()
+				{
+					Id = id,
+					State = state,
+					Timeout = timeout
+				};
+				LockDbContext.Add(lockDto);
+			}
+			else
+			{
+				lockDto.State = state;
+				lockDto.Timeout = timeout;
+				LockDbContext.Update(lockDto);
+			}
+			await LockDbContext.SaveChangesAsync();
 		}
 
 		private void TimerExpired(object obj)
 		{
-			DateTime now = DateTime.Now;
-			foreach (Lock @lock in IdToLock.Values.Where(l => l.Timeout <= now))
+			TimerExpiredAsync(obj).Wait();
+		}
+
+		private async Task TimerExpiredAsync(object obj)
+		{
+			async Task WaitToggleRelease(Lock @lock)
 			{
+				await @lock.Semaphore.WaitAsync();
 				@lock.Timeout = null;
-				ToggleLockAsync(@lock, "TIMEOUT").Wait();
+				await ToggleAsync(@lock, "TIMEOUT");
+				@lock.Semaphore.Release();
 			}
-			UpdateTimer();
+
+			DateTime now = DateTime.Now;
+			var locks = IdToLock.Values
+				.Where(l => l.Timeout <= now).ToList();
+			var waitLocksTasks = locks.Select(WaitToggleRelease);
+			await Task.WhenAll(waitLocksTasks);
+			await UpdateTimerAsync();
 		}
 
-		private void UpdateTimer()
+		private async Task UpdateTimerAsync()
 		{
-			DateTime? next = IdToLock.Values
-				.Where(l => l.Timeout.HasValue)
-				.OrderBy(l => l.Timeout.Value)
-				.FirstOrDefault()?.Timeout;
-			
-			int timeout;
-			if (next.HasValue)
+			await TimerSemaphore.WaitAsync();
+			try
 			{
-				DateTime now = DateTime.Now;
-				timeout = Math.Max((int)(next.Value - now).TotalMilliseconds, 0);
-			}
-			else
-			{
-				timeout = -1;
-			}
-			Timer.Change(timeout, -1);
-		}
+				var waitLocksTask = IdToLock.Values.Select(l => l.Semaphore.WaitAsync());
+				DateTime? next;
+				await Task.WhenAll(waitLocksTask);
+				try
+				{
+					next = IdToLock.Values
+						.Where(l => l.Timeout.HasValue)
+						.OrderBy(l => l.Timeout.Value)
+						.FirstOrDefault()?.Timeout;
+				}
+				finally
+				{
+					foreach (Lock @lock in IdToLock.Values)
+					{
+						@lock.Semaphore.Release();
+					}
+				}
 
-		private Task SetAsync(Lock @lock, LockMode mode, string reason)
-		{
-			if (@lock.Status != mode)
-			{
-				lock (this)
+				int timeout;
+				if (next.HasValue)
 				{
 					DateTime now = DateTime.Now;
-					@lock.Status = mode;
-					PinLog pinLog = new PinLog()
-					{
-						Pin = @lock.PinId,
-						PinState = Lock.ToPinState(@lock.Status),
-						Reason = reason,
-						Time = now
-					};
-					Logger.LogInformation("{0} set to {1} ({2})", @lock.Id, mode, reason);
-					LockDbContext.Add(pinLog);
+					timeout = Math.Max((int)(next.Value - now).TotalMilliseconds, 0);
 				}
-				return LockDbContext.SaveChangesAsync();
+				else
+				{
+					timeout = -1;
+				}
+				Timer.Change(timeout, -1);
+			}
+			finally
+			{
+				TimerSemaphore.Release();
+			}
+		}
+
+		private async Task<LockState> ToggleAsync(Lock @lock, string reason)
+		{
+			DateTime now = DateTime.Now;
+			LockState targetState = @lock.State.Toggle();
+			@lock.State = targetState;
+			PinLogDto pinLog = new PinLogDto()
+			{
+				Pin = @lock.PinId,
+				PinState = Lock.ToPinState(@lock.State),
+				Reason = reason,
+				Time = now
+			};
+			Logger.LogInformation("{0} toggled to {1} ({2})", @lock.Id, targetState, reason);
+			await DbSemaphore.WaitAsync();
+			try
+			{
+				LockDbContext.Add(pinLog);
+				await LockDbContext.SaveChangesAsync();
+			}
+			finally
+			{
+				DbSemaphore.Release();
+			}
+			return targetState;
+		}
+
+		private async Task SetAsync(Lock @lock, LockState mode, string reason)
+		{
+			if (@lock.State != mode)
+			{
+				DateTime now = DateTime.Now;
+				@lock.State = mode;
+				PinLogDto pinLog = new PinLogDto()
+				{
+					Pin = @lock.PinId,
+					PinState = Lock.ToPinState(@lock.State),
+					Reason = reason,
+					Time = now
+				};
+				Logger.LogInformation("{0} set to {1} ({2})", @lock.Id, mode, reason);
+				await DbSemaphore.WaitAsync();
+				try
+				{
+					LockDbContext.Add(pinLog);
+					await LockDbContext.SaveChangesAsync();
+				}
+				finally
+				{
+					DbSemaphore.Release();
+				}
 			}
 			else
 			{
 				Logger.LogInformation("{0} is already in mode {1} ({2})", @lock.Id, mode, reason);
 			}
-			return Task.CompletedTask;
-		}
-
-		public Task ToggleLockAsync(Lock @lock, string reason)
-		{
-			DateTime now = DateTime.Now;
-			lock (this)
-			{
-				@lock.Toggle();
-				PinLog pinLog = new PinLog()
-				{
-					Pin = @lock.PinId,
-					PinState = Lock.ToPinState(@lock.Status),
-					Reason = reason,
-					Time = now
-				};
-				Logger.LogInformation("{0} was toggled to {1} ({2})", @lock.Id, @lock.Status, reason);
-				LockDbContext.Add(pinLog);
-			}
-			return LockDbContext.SaveChangesAsync();
 		}
 	}
 }

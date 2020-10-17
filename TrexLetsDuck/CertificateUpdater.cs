@@ -26,7 +26,7 @@ namespace TrexLetsDuck
 			Certificate = File.Exists(filePath) ? new X509Certificate2(filePath) : null;
 		}
 
-		private void Callback(object? obj)
+		private void Callback(object obj)
 		{
 			CheckUpdateCertificate();
 		}

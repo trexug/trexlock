@@ -12,7 +12,7 @@ namespace TrexLock.Migrations
                 columns: table => new
                 {
                     Id = table.Column<string>(nullable: false),
-                    Mode = table.Column<int>(nullable: false),
+                    State = table.Column<int>(nullable: false),
                     Timeout = table.Column<DateTime>(nullable: true)
                 },
                 constraints: table =>

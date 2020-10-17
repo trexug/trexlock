@@ -6,7 +6,7 @@ using Unosquare.RaspberryIO.Abstractions;
 
 namespace TrexLock.Persistence.Dto
 {
-	public class PinLog
+	public class PinLogDto
 	{
 		public int? Id { get; set; }
 		public int Pin { get; set; }

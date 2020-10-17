@@ -16,12 +16,12 @@ namespace TrexLock.Migrations
             modelBuilder
                 .HasAnnotation("ProductVersion", "3.1.8");
 
-            modelBuilder.Entity("TrexLock.Persistence.Dto.LockState", b =>
+            modelBuilder.Entity("TrexLock.Persistence.Dto.LockDto", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("Mode")
+                    b.Property<int>("State")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime?>("Timeout")
@@ -32,7 +32,7 @@ namespace TrexLock.Migrations
                     b.ToTable("Locks");
                 });
 
-            modelBuilder.Entity("TrexLock.Persistence.Dto.PinLog", b =>
+            modelBuilder.Entity("TrexLock.Persistence.Dto.PinLogDto", b =>
                 {
                     b.Property<int?>("Id")
                         .ValueGeneratedOnAdd()

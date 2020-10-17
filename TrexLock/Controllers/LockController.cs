@@ -31,6 +31,9 @@ namespace TrexLock.Controllers
 		[HttpPost("{id}")]
 		public async Task<ActionResult> PostCommandAsync(string id, [FromBody] LockCommand command)
 		{
+			const string SetReason = "IFTTT Set";
+			const string ToggleReason = "IFTTT Toggle";
+
 			ActionResult result;
 
 			if (!IsAuthorized(command))
@@ -45,7 +48,22 @@ namespace TrexLock.Controllers
 				{
 					timeout = now + TimeSpan.FromSeconds(command.Timeout.Value);
 				}
-				await LockManager.SetLockAsync(id, command.Action, "IFTTT", timeout);
+
+				switch (command.Action)
+				{
+					case LockAction.Lock:
+						await LockManager.SetLockAsync(id, LockState.Locked, SetReason, timeout);
+						break;
+					case LockAction.Unlock:
+						await LockManager.SetLockAsync(id, LockState.Unlocked, SetReason, timeout);
+						break;
+					case LockAction.Toggle:
+						await LockManager.ToggleLockAsync(id, ToggleReason);
+						break;
+					default:
+						return BadRequest();
+				}
+				
 				result = Ok();
 			}
 

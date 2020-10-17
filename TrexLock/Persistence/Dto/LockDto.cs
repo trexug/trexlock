@@ -6,10 +6,10 @@ using TrexLock.Locking;
 
 namespace TrexLock.Persistence.Dto
 {
-	public class LockState
+	public class LockDto
 	{
 		public string Id { get; set; }
-		public LockMode Mode { get; set; }
+		public LockState State { get; set; }
 		public DateTime? Timeout { get; set; }
 	}
 }

@@ -14,8 +14,8 @@ namespace TrexLock.Persistence
 
 		protected override void OnConfiguring(DbContextOptionsBuilder options)
 			=> options.UseSqlite("Data Source=trexlock.db");
-		public DbSet<PinLog> PinLogs { get; set; }
-		public DbSet<LockState> Locks { get; set; }
+		public DbSet<PinLogDto> PinLogs { get; set; }
+		public DbSet<LockDto> Locks { get; set; }
 
 	}
 }
