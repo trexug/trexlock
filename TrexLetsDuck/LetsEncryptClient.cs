@@ -2,6 +2,7 @@
 using Certes.Acme;
 using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace TrexLetsDuck
@@ -42,6 +43,7 @@ namespace TrexLetsDuck
 			var privateKey = KeyFactory.NewKey(KeyAlgorithm.ES256);
 			setDnsTxt(dnsTxt);
 			await dnsChallenge.Validate();
+			Thread.Sleep(1000);
 			var cert = await order.Generate(Configuration.CsrInfo, privateKey);
 			var pfxBuilder = cert.ToPfx(privateKey);
 			return pfxBuilder.Build(Configuration.CertificateName, Configuration.CertificatePassword);
