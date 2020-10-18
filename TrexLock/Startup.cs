@@ -39,8 +39,7 @@ namespace TrexLock
 			.AddSingleton<IGpioPinFactory, MockGpioPinFactory>()
 			.AddSingleton<CertificateUpdater>()
 			.AddSingleton<IpUpdater>()
-			.AddSingleton<IPemKeyStorage, PemKeyStorage>()
-			.AddSingleton<CertificateFileWatcher>()
+			.AddSingleton<ICertificateStorage, CertificateStorage>()
 			.AddControllers().AddNewtonsoftJson();
 		}
 
@@ -66,9 +65,9 @@ namespace TrexLock
 			app.ApplicationServices.GetService<LockManager>();
 			app.ApplicationServices.GetService<IpUpdater>();
 			app.ApplicationServices.GetService<CertificateUpdater>();
-			CertificateFileWatcher watcher = app.ApplicationServices.GetService<CertificateFileWatcher>();
-			Program.Certificate = watcher.Certificate;
-			watcher.CertificateChanged += (s, e) =>
+			CertificateStorage storage = (CertificateStorage)app.ApplicationServices.GetService<ICertificateStorage>();
+			Program.Certificate = storage.Certificate;
+			storage.CertificateChanged += (s, e) =>
 			{
 				if (e != null)
 				{

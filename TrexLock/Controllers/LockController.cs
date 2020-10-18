@@ -1,14 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using System;
+using System.Threading.Tasks;
 using TrexLock.Api;
 using TrexLock.Api.Dto;
 using TrexLock.Locking;
-using TrexLock.Persistence;
 
 namespace TrexLock.Controllers
 {
@@ -19,13 +15,10 @@ namespace TrexLock.Controllers
 		private LockManager LockManager { get; }
 		private AuthOptions AuthOptions { get; }
 
-		private LockDbContext LockDbContext { get; }
-
-		public LockController(LockManager lockManager, IOptions<AuthOptions> authOptions, LockDbContext lockDbContext)
+		public LockController(LockManager lockManager, IOptions<AuthOptions> authOptions)
 		{
 			LockManager = lockManager;
 			AuthOptions = authOptions.Value;
-			LockDbContext = lockDbContext;
 		}
 
 		[HttpPost("{id}")]
@@ -38,7 +31,7 @@ namespace TrexLock.Controllers
 
 			if (!IsAuthorized(command))
 			{
-				result = Forbid();
+				result = StatusCode(403);
 			}
 			else
 			{
