@@ -36,7 +36,11 @@ namespace TrexLock
 			.AddEntityFrameworkSqlite()
 			.AddDbContext<LockDbContext>(ServiceLifetime.Singleton)
 			.AddSingleton<LockManager, LockManager>()
+#if DEBUG
+			.AddSingleton<IGpioPinFactory, MockGpioPinFactory>()
+#else
 			.AddSingleton<IGpioPinFactory, PiGpioPinFactory>()
+#endif
 			.AddSingleton<CertificateUpdater>()
 			.AddSingleton<IpUpdater>()
 			.AddSingleton<ICertificateStorage, CertificateStorage>()

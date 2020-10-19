@@ -22,9 +22,9 @@ namespace TrexLock.Controllers
 		}
 
 		[HttpGet]
-		public OkObjectResult Get()
+		public string Get()
 		{
-			return Ok("TrexLock says hello");
+			return "TrexLock says hello";
 		}
 
 		[HttpPost("{id}")]
