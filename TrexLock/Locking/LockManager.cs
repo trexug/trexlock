@@ -33,12 +33,21 @@ namespace TrexLock.Locking
 
 		private void Initialize(LockOptions lockOptions, IGpioPinFactory gpioPinFactory, LockDbContext lockDbContext)
 		{
+			DateTime now = DateTime.Now;
 			async Task InitializeLock(LockConfiguration lockConfiguration)
 			{
 				LockDto lockDto = await lockDbContext.Locks.FindAsync(lockConfiguration.Id);
 				LockState mode = lockDto?.State ?? LockState.Locked;
+				bool timedOut = lockDto?.Timeout <= now;
+				if (timedOut)
+				{
+					mode = mode.Toggle();
+				}
 				Lock @lock = new Lock(lockConfiguration.Id, gpioPinFactory.CreatePin((BcmPin)lockConfiguration.Pin), (LockState)(-1));
-				@lock.Timeout = lockDto?.Timeout;
+				if (!timedOut)
+				{
+					@lock.Timeout = lockDto?.Timeout;
+				}
 				await SetAsync(@lock, mode, "INITIALIZE");
 				IdToLock.Add(@lock.Id, @lock);
 			}
