@@ -7,8 +7,8 @@ namespace TrexLock.Locking
 {
 	public class Lock
 	{
-		public const GpioPinValue PIN_ON = GpioPinValue.Low;
-		public const GpioPinValue PIN_OFF = GpioPinValue.High;
+		public const GpioPinValue PIN_ON = GpioPinValue.High;
+		public const GpioPinValue PIN_OFF = GpioPinValue.Low;
 
 		private IGpioPin Pin { get; set; }
 		private LockState state;
