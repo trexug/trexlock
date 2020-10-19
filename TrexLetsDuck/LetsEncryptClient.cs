@@ -10,7 +10,7 @@ namespace TrexLetsDuck
 {
 	public class LetsEncryptClient
 	{
-		private readonly static Uri LetsEncryptUri = WellKnownServers.LetsEncryptStagingV2;
+		private readonly static Uri LetsEncryptUri = WellKnownServers.LetsEncryptV2;
 		private AcmeContext AcmeContext { get; set; }
 		private LetsEncryptConfiguration Configuration { get; }
 		public LetsEncryptClient(LetsEncryptConfiguration configuration)
