@@ -21,6 +21,12 @@ namespace TrexLock.Controllers
 			AuthOptions = authOptions.Value;
 		}
 
+		[HttpGet]
+		public OkObjectResult Get()
+		{
+			return Ok("TrexLock says hello");
+		}
+
 		[HttpPost("{id}")]
 		public async Task<ActionResult> PostCommandAsync(string id, [FromBody] LockCommand command)
 		{
